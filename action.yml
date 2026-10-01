@@ -1,0 +1,41 @@
+name: Averto Security Gate
+description: Run repository security policy from averto.yml without storing an Averto credential.
+author: Averto
+
+inputs:
+  api-url:
+    description: Averto API origin.
+    required: false
+    default: https://platform.averto.dev
+  audience:
+    description: Audience requested for the GitHub OIDC token.
+    required: false
+    default: averto.dev
+  fail-closed:
+    description: Fail the step for service, infrastructure, quota, or budget errors.
+    required: false
+    default: "false"
+  timeout-minutes:
+    description: Maximum time to wait for the Averto run.
+    required: false
+    default: "30"
+
+outputs:
+  run-id:
+    description: Averto CI run ID.
+  run-url:
+    description: URL for the full Averto run.
+  averto-exit-code:
+    description: Logical result (0 pass, 1 gate failure, 2 config error, 3 infrastructure error).
+  summary:
+    description: Concise new, pre-existing, and fixed finding counts.
+  sarif-path:
+    description: Local SARIF path, or an empty string when SARIF is disabled or unavailable.
+
+runs:
+  using: node24
+  main: dist/index.js
+
+branding:
+  icon: shield
+  color: purple

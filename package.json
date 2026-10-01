@@ -1,0 +1,27 @@
+{
+  "name": "@averto/github-action",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Run Averto config-as-code security checks from GitHub Actions",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/index.ts -o dist --minify --source-map",
+    "check": "tsc --noEmit",
+    "test": "tsc -p tsconfig.test.json && node --test .test-dist/test/*.test.js",
+    "verify-dist": "npm run build && git diff --exit-code -- dist"
+  },
+  "dependencies": {
+    "@actions/core": "1.11.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "@vercel/ncc": "0.45.0",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "overrides": {
+    "undici": "6.29.0"
+  }
+}
