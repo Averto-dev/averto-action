@@ -69,4 +69,19 @@ describe("AvertoClient", () => {
     assert.equal(calls.length, 3);
     assert.equal(new Headers(calls[2]?.[1]?.headers).get("authorization"), "Bearer fresh");
   });
+
+  it("keeps polling completed runs until gate_outcome is finalized", async () => {
+    const responses = [
+      new Response(JSON.stringify({ data: { run: { id: "run-1", state: "running" }, poll_after_ms: 1 } }), { status: 200 }),
+      new Response(JSON.stringify({ data: { run: { id: "run-1", state: "completed" }, poll_after_ms: 1 } }), { status: 200 }),
+      new Response(JSON.stringify({ data: { run: { id: "run-1", state: "completed", gate_outcome: "fail" }, poll_after_ms: 1 } }), { status: 200 }),
+    ];
+    const fetcher: typeof fetch = async () => responses.shift()!;
+    const client = new AvertoClient("https://averto.example", fetcher);
+    const initial = { data: { run: { id: "run-1", state: "queued" }, poll_after_ms: 1 } };
+    const completed = await client.waitForRun(initial, 5_000);
+    assert.equal(completed.data.run.state, "completed");
+    assert.equal(completed.data.run.gate_outcome, "fail");
+    assert.equal(responses.length, 0);
+  });
 });

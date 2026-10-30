@@ -68,7 +68,9 @@ export class AvertoClient {
   async waitForRun(initial: RunResponse, timeoutMs: number): Promise<RunResponse> {
     let current = initial;
     const deadline = Date.now() + timeoutMs;
-    while (["queued", "running"].includes(current.data.run.state)) {
+    // Keep polling while the run is active, and also while it is marked
+    // completed without a gate yet (diff finalization still in flight).
+    while (this.shouldKeepPolling(current)) {
       if (Date.now() >= deadline) throw new ApiError("timed out waiting for Averto", 504, "CI_TIMEOUT");
       const suggested = Math.max(500, Math.min(current.data.poll_after_ms || 2_000, 15_000));
       const jitter = Math.floor(Math.random() * Math.min(500, suggested / 4));
@@ -76,6 +78,15 @@ export class AvertoClient {
       current = await this.getRun(current.data.run.id);
     }
     return current;
+  }
+
+  private shouldKeepPolling(current: RunResponse): boolean {
+    const { state, gate_outcome: gateOutcome } = current.data.run;
+    if (["queued", "running"].includes(state)) return true;
+    // Completed scans publish Checks only after finalize sets gate_outcome.
+    // Returning early here caused a false Action pass while Checks failed.
+    if (state === "completed" && (gateOutcome === null || gateOutcome === undefined)) return true;
+    return false;
   }
 
   private async request<T>(path: string, init: RequestInit = {}, authenticate = true): Promise<T> {
