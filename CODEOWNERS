@@ -1,0 +1,3 @@
+# Default reviewers for the Averto GitHub Action.
+# Adjust the team slug if your org uses a different maintainers team.
+* @Averto-dev/maintainers
