@@ -27,8 +27,19 @@ export async function runAverto(options: RunOptions): Promise<ActionResult> {
     const accepted = await client.createRun(options.context);
     runId = accepted.data.run.id;
     const completed = await client.waitForRun(accepted, options.timeoutMs);
+    const gateOutcome = completed.data.run.gate_outcome;
     const diff = await client.getDiff(runId);
     const runUrl = `${baseRunUrl}/${runId}`;
+    const resolvedGate = gateOutcome ?? diff.data.gate_outcome;
+    if (resolvedGate === "budget_refused") {
+      return {
+        runId,
+        runUrl,
+        exitCode: 3,
+        summary: `Averto refused this run under the configured credit budget.\nReview: ${runUrl}`,
+        warning: "CI_BUDGET_REFUSED",
+      };
+    }
     const summary = summaryLine(diff.data.findings);
     const lines = findingLines(diff, runUrl);
     let sarifPath: string | undefined;
@@ -40,7 +51,7 @@ export async function runAverto(options: RunOptions): Promise<ActionResult> {
     return {
       runId,
       runUrl,
-      exitCode: logicalExitCode(completed.data.run.gate_outcome ?? diff.data.gate_outcome),
+      exitCode: logicalExitCode(resolvedGate),
       summary: [...lines, summary].join("\n"),
       sarifPath,
     };

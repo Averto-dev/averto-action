@@ -30,5 +30,6 @@ describe("developer output", () => {
     assert.equal(logicalExitCode("fail"), 1);
     assert.equal(logicalExitCode("config_error"), 2);
     assert.equal(logicalExitCode("infra_error"), 3);
+    assert.equal(logicalExitCode("budget_refused"), 3);
   });
 });

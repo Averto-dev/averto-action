@@ -38,6 +38,8 @@ export function logicalExitCode(gateOutcome?: string | null): 0 | 1 | 2 | 3 {
     case "config_error":
       return 2;
     case "infra_error":
+    case "budget_refused":
+      // Quota refusals are infrastructure/quota class (exit 3), not a clean pass.
       return 3;
     default:
       return 0;

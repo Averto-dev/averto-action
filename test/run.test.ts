@@ -46,4 +46,21 @@ describe("runAverto", () => {
     assert.equal(configuration.exitCode, 2);
     assert.equal(infrastructure.exitCode, 3);
   });
+
+  it("maps budget refusals to exit 3 with an explicit summary", async () => {
+    const result = await runAverto({
+      apiUrl: "https://averto.example",
+      context,
+      oidcToken: "token",
+      timeoutMs: 1000,
+      tempDirectory: tmpdir(),
+      client: fakeClient({
+        waitForRun: async () => run("budget_refused"),
+        getDiff: async () => ({ data: { state: "failed", gate_outcome: "budget_refused", findings: [], poll_after_ms: 2000 } }),
+      }),
+    });
+    assert.equal(result.exitCode, 3);
+    assert.equal(result.warning, "CI_BUDGET_REFUSED");
+    assert.match(result.summary, /credit budget/);
+  });
 });
